@@ -1,6 +1,6 @@
-import atexit
-from apscheduler.schedulers.background import BackgroundScheduler
-from apscheduler.triggers.interval import IntervalTrigger
+# import atexit
+# from apscheduler.schedulers.background import BackgroundScheduler
+# from apscheduler.triggers.interval import IntervalTrigger
 
 from flask import session, jsonify
 from app import webapp
@@ -56,20 +56,20 @@ def notification():
             else:
                 # no newly completed orders
                 message = " "
-
+    print("refreshed.")
     return jsonify(message=message)
 
 
-scheduler = BackgroundScheduler()
-scheduler.start()
-scheduler.add_job(
-    func=notification,
-    trigger=IntervalTrigger(seconds=60),
-    id='orders_status',
-    name='Refresh the pages opened by an authenticated user every 60 seconds',
-    misfire_grace_time=10,
-    coalesce=True,
-    max_instances=1,
-    replace_existing=False)
-# Shut down the scheduler when exiting the app
-atexit.register(lambda: scheduler.shutdown())
+# scheduler = BackgroundScheduler()
+# scheduler.start()
+# scheduler.add_job(
+#     func=notification,
+#     trigger=IntervalTrigger(seconds=60),
+#     id='orders_status',
+#     name='Refresh the pages opened by an authenticated user every 60 seconds',
+#     misfire_grace_time=10,
+#     coalesce=True,
+#     max_instances=1,
+#     replace_existing=False)
+# # Shut down the scheduler when exiting the app
+# atexit.register(lambda: scheduler.shutdown())

@@ -5,6 +5,10 @@
     <script type="text/javascript"
       src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
     <script type="text/javascript">
+      var nIntervId;
+      function refresh() {
+      nIntervId = setInterval(get_messages, 60000);
+      }
       function get_messages() {
             $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
             $.getJSON($SCRIPT_ROOT+"/_notification",
@@ -17,17 +21,17 @@
     <style>
         div#messages {
         width:80%;
-        padding:10px;
+        padding:15px;
         font-size:1.2em;
         <!--border: 1px solid black;-->
         <!--background-color:#90EE90;-->
-        color:green;
+        color:#0000FF;
         margin: auto;
         }
     </style>
     {% block head %}{% endblock %}
 </head>
-<body>
+<body onload="refresh();">
 <div id="messages"></div>
 {% block body %}{% endblock %}
 </body>
