@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{title}}</title>
+    <style>
+        h1{
+        font-size:4em;
+        font-family: "Times New Roman", Times, serif;
+        }
+        fieldset {
+        width:50%;
+        }
+        input[type=submit] {
+        font-size: 1.6em;
+        font-family: Verdana, sans-serif;
+        width:200px;
+        height:60px;
+        color: white;
+        padding: 5px 10px;
+        margin: 5px 10px;
+        <!--border-radius: 5px;-->
+        border-style: outset;
+        border-color: #000;
+        background: #64AAD0;
+        }
+        input[type=submit]:hover{
+        background: #034569;
+        }
+        p.errormsg{
+        color:#3C9DD0;
+        }
+    </style>
+</head>
+<body>
+<center>
+    <h1>Hello Dear Food Truck Owner!</h1>
+    <form action="{{url_for('owner_login')}}" method="post">
+    <fieldset>
+        <legend>Login:</legend>
+        <b>username :</b><br>
+        <input type="text" name="username" value="{{log_username if log_username != None}}" required><br><br>
+        <b>password :</b><br>
+        <input type="password" name="password" required><br>
+        <p id="login_error" class="errormsg">{{login_error_msg if login_error_msg != None}}</p>
+        <input type="submit" name="login" value="Login">
+    </fieldset>
+    </form>
+    <br>
+    <b>Don't have an account? Sign up here!</b>
+    <br>
+    <form action="{{url_for('owner_signup')}}" method="post">
+    <fieldset>
+        <legend>Signup:</legend>
+        <b>username(It'll be used as your Truck's name.) :(6 to 20 characters)</b><br>
+        <input type="text" name="new_username" value="{{sign_username if sign_username != None}}" required><br><br>
+        <b>password :(6 to 20 characters)</b><br>
+        <input type="password" name="new_password" required><br>
+        <p id="signup_response" class="errormsg">{{signup_error_msg if signup_error_msg != None}}</p>
+        <input type="submit" name="signup" value="Signup">
+    </fieldset>
+    </form>
+</center>
+</body>
+</html>

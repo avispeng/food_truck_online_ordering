@@ -1,0 +1,10 @@
+#!/home/haoyuepeng/PycharmProjects/foodtruck/venv/bin/python3.6
+# EASY-INSTALL-ENTRY-SCRIPT: 'cfn-flip==0.2.5','console_scripts','cfn-flip'
+__requires__ = 'cfn-flip==0.2.5'
+import sys
+from pkg_resources import load_entry_point
+
+if __name__ == '__main__':
+    sys.exit(
+        load_entry_point('cfn-flip==0.2.5', 'console_scripts', 'cfn-flip')()
+    )

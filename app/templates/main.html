@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{title}}</title>
+    <style>
+        h1.big{
+        font-size: 7em;
+        font-family: "Times New Roman", Times, serif;
+        }
+        input[type=submit] {
+        font-size: 2em;
+        font-family: "Times New Roman", Times, serif;
+        width:500px;
+        height:150px;
+        color: white;
+        padding: 5px 10px;
+        margin: 5px 10px;
+        <!--border-radius: 5px;-->
+        border-style: outset;
+        border-color: #000;
+        background: #64AAD0;
+        }
+        input[type=submit]:hover{
+        background: #034569;
+        }
+    </style>
+</head>
+<body>
+    <center>
+        <h1 class="big">Welcome to {{title}}!</h1>
+        <form action="{{url_for('customer_main')}}" method="get">
+            <input type="submit" name="customer" value="Customer Entrance" class="big_button">
+        </form>
+        <br><br>
+        <form action="{{url_for('owner_main')}}" method="get">
+            <input type="submit" name="owner" value="Truck Owner Entrance" class="big_button">
+        </form>
+    </center>
+</body>
+</html>

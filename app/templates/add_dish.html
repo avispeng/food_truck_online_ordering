@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block head %}
+    <meta charset="UTF-8">
+    <title>{{title}}</title>
+    <style>
+        input[type=submit] {
+        font-size: 1em;
+        font-family: Verdana, sans-serif;
+        width:150px;
+        height:40px;
+        color: white;
+        padding: 5px 10px;
+        margin: 5px 10px;
+        <!--border-radius: 5px;-->
+        border-style: outset;
+        border-color: #000;
+        background: #64AAD0;
+        }
+        input[type=submit]:hover{
+        background: #034569;
+        }
+    </style>
+{% endblock %}
+{% block body %}
+<h1 align="center">{{title}}</h1>
+<div align="center">
+    <form action="{{url_for('owner_home', truck_username=truck_username)}}" method="get">
+        <input type="submit" value="Back">
+    </form><br>
+    <form action="{{url_for('dish_added', truck_username=truck_username)}}" method="post" enctype="multipart/form-data">
+        <div style="display: inline-block; text-align: left;">
+            Dish name:
+            <input type="text" name="dish_name" style="width:400px" required><br><br>
+            Price:
+            <input type="number" min="0" step="0.01" name="price" style="width:400px" required><br><br>
+            Photo:(optional)
+            <input type="file" name="photo" value="Browse">
+        </div><br><br>
+        <p id="add_error" class="errormsg">{{error_msg if error_msg != None}}</p>
+        <input type="submit" value="Save">
+
+    </form>
+</div>
+{% endblock %}

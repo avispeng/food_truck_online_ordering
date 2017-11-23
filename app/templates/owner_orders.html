@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block head %}
+    <meta charset="UTF-8">
+    <title>{{title}} of {{truck_username}}</title>
+    <style>
+        div.dishes {
+        width:200px;
+        height:50px;
+        overflow: scroll;
+        }
+        input.topButtons[type=submit] {
+        font-size: 1em;
+        font-family: Verdana, sans-serif;
+        width:150px;
+        height:40px;
+        color: white;
+        padding: 5px 10px;
+        margin: 5px 10px;
+        border-style: outset;
+        border-color: #000;
+        background: #64AAD0;
+
+        }
+        input.topButtons[type=submit]:hover{
+        background: #034569;
+        }
+
+        th{
+        padding-top: 12px;
+        padding-bottom: 12px;
+        text-align: center;
+        background-color: #034569;
+        color:white;
+        width:200px;
+        }
+
+        td {
+        text-align: center;
+        border: 1px solid #ddd;
+        }
+
+    </style>
+{% endblock %}
+{% block body %}
+<h1 align="center" id="top">{{title}}</h1>
+<div align="center">
+    <form action="{{url_for('owner_home', truck_username=truck_username)}}" method="get">
+        <input type="submit" value="Back to Home" class="topButtons">
+    </form><br>
+    <table width="80%">
+        <thead>
+        <th>Start Time</th>
+        <th>Finish Time</th>
+        <th>Customer</th>
+        <th>Paid</th>
+        <th>Dishes</th>
+        {% if title == 'Ongoing Orders' %}
+            <th>Operation</th>
+        {% endif %}
+        </thead>
+        {% for order in orders %}
+            <tr>
+                <td>{{order['start_time']}}</td>
+                <td>{{order['finish_time']}}</td>
+                <td>{{order['customer_username']}}</td>
+                <td>{{order['paid']}}</td>
+                <td><div class="dishes">{{order['dishes']}}</div></td>
+                {% if title == 'Ongoing Orders' %}
+                    <td>
+                    <form action="{{url_for('complete_order',truck_username=truck_username)}}" method='post'>
+                        <button type="submit" name="complete" value="{{dish['order_no']}}">complete</button>
+                    <!--<input type='submit' value='complete' />-->
+                    </form>
+                    </td>
+                {% endif %}
+            </tr>
+        {% endfor %}
+
+        {% if title == 'Ongoing Orders' %}
+            {% for order in orders_new %}
+                <tr style="color:green;">
+                    <td>{{order['start_time']}}</td>
+                    <td>{{order['finish_time']}}</td>
+                    <td>{{order['customer_username']}}</td>
+                    <td>{{order['paid']}}</td>
+                    <td><div class="dishes">{{order['dishes']}}</div></td>
+                    <td>
+                    <form action="{{url_for('complete_order',truck_username=truck_username)}}" method='post'>
+                        <button type="submit" name="complete" value="{{dish['order_no']}}">complete</button>
+                    <!--<input type='submit' value='complete' />-->
+                    </form>
+                    </td>
+                </tr>
+            {% endfor %}
+        {% endif %}
+    </table><br>
+    <a href="#top">Go to Top</a>
+</div>
+{% endblock %}

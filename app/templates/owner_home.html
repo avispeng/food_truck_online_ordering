@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block head %}
+    <meta charset="UTF-8">
+    <title>{{truck_username}}</title>
+    <style>
+        table{
+        margin: 3pt;
+        }
+        th{
+        padding-top: 12px;
+        padding-bottom: 12px;
+        text-align: center;
+        background-color: #034569;
+        color:white;
+        }
+        td {
+        width:225px;
+        height:225px;
+        text-align: center;
+        border: 1px solid #ddd;
+        }
+        input.topButtons[type=submit] {
+        font-size: 1em;
+        font-family: Verdana, sans-serif;
+        width:150px;
+        height:40px;
+        color: white;
+        padding: 5px 10px;
+        margin: 5px 10px;
+        border-style: outset;
+        border-color: #000;
+        background: #64AAD0;
+
+        }
+        input.topButtons[type=submit]:hover{
+        background: #034569;
+        }
+
+        input.operation[type=submit] {
+        font-size: 0.9em;
+        font-family: Verdana, sans-serif;
+        width:120px;
+        height:30px;
+        color: white;
+        padding: 5px 10px;
+        margin: 5px 10px;
+        border-style: outset;
+        border-color: #000;
+        background: #034569;
+        }
+    </style>
+{% endblock %}
+{% block body %}
+<h1 align="center" id="top">Welcome! {{truck_username}}!</h1>
+<br>
+<div align="center">
+    <div style="display: inline-block;">
+        <form action="{{url_for('add_dish', truck_username=truck_username)}}" method="get">
+            <input type='submit' value='Add One Dish' class="topButtons" />
+        </form>
+    </div>
+    <div style="display: inline-block;">
+        <form action="{{url_for('history_orders', truck_username=truck_username)}}" method="get">
+            <input type='submit' value='History Orders' class="topButtons" />
+        </form>
+    </div>
+    <div style="display: inline-block;">
+        <form action="{{url_for('ongoing_orders', truck_username=truck_username)}}" method="get">
+            <input type='submit' value='Ongoing Orders' class="topButtons" />
+        </form>
+    </div>
+    <div style="display: inline-block;">
+        <form action="{{url_for('logout')}}" method="get">
+            <input type='submit' value='Log out' class="topButtons" />
+        </form>
+    </div>
+    <br>
+    <table>
+        <thead>
+        <th>Dish Name</th>
+        <th>Price</th>
+        <th>Photo</th>
+        <th>Operation</th>
+        </thead>
+        {% for dish in dishes %}
+            <tr>
+                <td>{{dish['dish_name']}}</td>
+                <td>{{dish['price']}}</td>
+                <td>
+                    <img src="https://delicious-dishes.s3.amazonaws.com/{{truck_username}}/{{dish['img_filename']}}"
+                                 alt="https://delicious-dishes.s3.amazonaws.com/{{truck_username}}/{{dish['img_filename']}}"
+                                 style="width:225px;height:225px;">
+                </td>
+                <td>
+                    <form action="{{url_for('delete_dish',truck_username=truck_username, dish_name=dish['dish_name'])}}" method='get'>
+                        <input type='submit' value='delete' class="operation"/>
+                    </form>
+                </td>
+            </tr>
+        {% endfor %}
+    </table><br>
+    <a href="#top">Go to Top</a>
+</div>
+{% endblock %}
