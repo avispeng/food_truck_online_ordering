@@ -8,17 +8,40 @@ import datetime
 
 dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
 
-
-@webapp.route('/owner', methods=['GET'])
+@webapp.route('/customer', methods=['GET'])
 def customer_main():
     """
     Display a page for both login and register as a truck owner
     :return: a html page
     """
-    return render_template("customer_main.html", title="Truck Owner")
+    return render_template("customer_main.html", title="Customer")
 
 
-@webapp.route('/owner/login', methods=['POST'])
+@webapp.route('/customer/<customer_name>', methods=['GET'])
+def customer_home(customer_name):
+    # make sure the user is the one logging in the session
+    if 'authenticated' not in session:
+        return redirect(url_for('customer_main'))
+    if session.get('username', '') != customer_name:
+        return redirect(url_for('customer_home', customer_name=session['username']))
+
+    # this is the correct customer_foodtruck_list
+    return render_template("customer_foodtruck_list.html", customer_name=customer_name)
+
+
+
+# check if current session is loggedin
+def check_authentication(customer_name):
+    # make sure the user is the one logging in the session
+    if 'authenticated' not in session:
+        return redirect(url_for('customer_main'))
+    if session.get('username', '') != customer_name:
+        return redirect(url_for('customer_home', customer_name=session['username']))
+
+
+
+
+@webapp.route('/customer/login', methods=['POST'])
 def customer_login():
     """
     Log in as an owner of the truck
@@ -26,17 +49,18 @@ def customer_login():
     """
     username = request.form.get('username',"")
     pwd = request.form.get('password',"")
-    table = dynamodb.Table('trucks')
+    table = dynamodb.Table('customers')
     # check if the account exists
     response = table.query(
-        KeyConditionExpression=Key('truck_username').eq(username)
+        KeyConditionExpression=Key('customer_username').eq(username)
     )
     error = False
     if response['Count'] == 0:
         error=True
         error_msg = "Error: Username doesn't exist!"
     if error:
-        return render_template("owner_main.html",title="Truck Owner", login_error_msg=error_msg, log_username=username)
+        return render_template("customer_main.html",title="Customer Page", login_error_msg=error_msg,
+                               log_username=username)
 
     # if username exists, is pwd correct?
     salt = response['Items'][0]['salt']
@@ -48,15 +72,18 @@ def customer_login():
         # add to the session
         session['authenticated'] = True
         session['username'] = username
-        return redirect(url_for('owner_home', truck_username=username))
+
+        # add customer_name for authentication reason
+        return redirect(url_for('customer_home', customer_name=username))
     else:
         error=True
         error_msg = "Error: Wrong password or username! Please try again!"
     if error:
-        return render_template("owner_main.html", title="Truck Owner", login_error_msg=error_msg, log_username=username)
+        return render_template("customer_main.html", title="Customer Page", login_error_msg=error_msg,
+                               log_username=username)
 
 
-@webapp.route('/owner/register', methods=['POST'])
+@webapp.route('/customer/register', methods=['POST'])
 def customer_signup():
     """
     Sign up as a truck owner
@@ -67,38 +94,35 @@ def customer_signup():
 
     # check length of input
     error = False
-    if len(username)<6 or len(username)>20 or len(pwd)<6 or len(pwd)>20:
+    if len(username) != 10 or len(pwd)<6 or len(pwd)>20:
         error=True
-        error_msg = "Error: Both username and password should have length of 6 to 20!"
+        error_msg = "Error: Invalid Username or Password Length"
     if error:
-        return render_template("owner_main.html", title="Truck Owner", signup_error_msg=error_msg,
+        return render_template("customer_main.html", title="Customer Page", signup_error_msg=error_msg,
                                sign_username=username)
 
     alphabet = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    numdic = "0123456789"
     # check if the username is valid
     for char in username:
-        if char not in alphabet:
+        if char not in numdic:
             error=True
-            error_msg = "Error: Username must be combination of characters or numbers!"
+            error_msg = "Error: Username Must Be Your 10 Digit Cellphone Number"
         if error:
-            return render_template("owner_main.html", title="Truck Owner", signup_error_msg=error_msg,
+            return render_template("customer_main.html", title="Customer Page", signup_error_msg=error_msg,
                                    sign_username=username)
 
-    # check whether username exists in truck owners table or customers table
-    table = dynamodb.Table('trucks')
-    response = table.query(
-        KeyConditionExpression=Key('truck_username').eq(username)
-    )
+    # check whether username exists in customers table
     table2 = dynamodb.Table('customers')
     response2 = table2.query(
         KeyConditionExpression=Key('customer_username').eq(username)
     )
     error = False
-    if response['Count'] != 0 or response2['Count'] != 0:
+    if response2['Count'] != 0:
         error = True
         error_msg = "Error: Username already exists!"
     if error:
-        return render_template("owner_main.html", title="Truck Owner", signup_error_msg=error_msg,
+        return render_template("customer_main.html", title="Customer Page", signup_error_msg=error_msg,
                                    sign_username=username)
 
     # create a salt value
@@ -108,7 +132,7 @@ def customer_signup():
     salt = "".join(chars)
     pwd += salt
     hashed_pwd = hashlib.sha256(pwd.encode()).hexdigest()
-    response = table.put_item(
+    response = table2.put_item(
         Item={
             'truck_username': username,
             'hashed_pwd': hashed_pwd,
@@ -118,11 +142,12 @@ def customer_signup():
     # add to the session
     session['authenticated'] = True
     session['username'] = username
-    return redirect(url_for('owner_home', truck_username=username))
+    return redirect(url_for('customer_home', truck_username=username))
 
 
-@webapp.route('/owner/<truck_username>', methods=['GET'])
-def customer_home(truck_username):
+# display the menu provided by a particular truck ==> customer_foodtruck_list
+@webapp.route('/customer/<customer_name>/<truck_username>', methods=['GET'])
+def select_truck(customer_name, truck_username):
     """
     Display the menu that belongs to the authenticated truck owner
     :param truck_username: the username of the authenticated user.
@@ -130,28 +155,24 @@ def customer_home(truck_username):
     """
     # make sure the user is the one logging in the session
     if 'authenticated' not in session:
-        return redirect(url_for('owner_main'))
-    if session.get('username', '') != truck_username:
-        return redirect(url_for('owner_home', truck_username=session['username']))
+        return redirect(url_for('customer_main'))
+    if session.get('username', '') != customer_name:
+        return redirect(url_for('customer_home', customer_name=session['username']))
 
     table = dynamodb.Table('menu')
     # get the list of dishes provided by this truck
     response = table.query(
         KeyConditionExpression=Key('truck_username').eq(truck_username)
     )
-    records = []
-    for i in response['Items']:
-        records.append(i)
-    while 'LastEvaluatedKey' in response:
-        response = table.query(
-            KeyConditionExpression=Key('truck_username').eq(truck_username),
-            ExclusiveStartKey=response['LastEvaluatedKey']
-            )
 
-        for i in response['Items']:
-            records.append(i)
+    # sanity check
+    if response['Items'] is None:
+        print("error: the food truck does not exist: ", truck_username)
+        return
 
-    return render_template("owner_home.html", dishes=records, truck_username=truck_username)
+    # display the menu for foodtruck
+    return render_template("customer_foodtruck_menu.html", customer_name=customer_name,
+                           truck_username=truck_username, dishes=response['Items'])
 
 
 @webapp.route('/customer/logout', methods=['GET'])
@@ -166,8 +187,8 @@ def logout():
     return redirect(url_for('main'))
 
 
-@webapp.route('/customer/<truck_username>/add_dish', methods=['GET'])
-def add_dish(truck_username):
+@webapp.route('/<customer>/<truck_username>/<dish_name>/add_dish', methods=['GET'])
+def add_dish(customer_name, truck_username, dish_name):
     """
     Enter the page where the truck owner can add a dish to his or her menu
     :param truck_username: authenticated user
@@ -175,11 +196,10 @@ def add_dish(truck_username):
     """
     # make sure the user is the one logging in the session
     if 'authenticated' not in session:
-        return redirect(url_for('owner_main'))
-    if session.get('username', '') != truck_username:
-        return redirect(url_for('owner_home', truck_username=session['username']))
+        return redirect(url_for('customer_main'))
+    if session.get('username', '') != customer_name :
+        return redirect(url_for('select_truck', truck_username=session['username']))
 
-    return render_template("add_dish.html", title="Add One Dish", truck_username=truck_username)
 
 
 @webapp.route('/customer/<truck_username>/dish_added', methods=['POST'])
@@ -262,52 +282,8 @@ def dish_added(truck_username):
     return redirect(url_for('owner_home', truck_username=truck_username))
 
 
-@webapp.route('/customer/<truck_username>/<dish_name>/delete', methods=['GET'])
-def delete_dish(truck_username, dish_name):
-    """
-    Delete the dish from the owner's menu
-    :param truck_username: authenticated user
-    :param dish_name: the name of dish to delete
-    :return: the owner's home page
-    """
-    # make sure the user is the one logging in the session
-    if 'authenticated' not in session:
-        return redirect(url_for('owner_main'))
-    if session.get('username', '') != truck_username:
-        return redirect(url_for('owner_home', truck_username=session['username']))
-
-    # get image filename from dynamodb
-    table = dynamodb.Table('menu')
-    response = table.query(
-        KeyConditionExpression=Key('truck_username').eq(truck_username) & Key('dish_name').eq(dish_name)
-    )
-    if response['Count'] > 0:
-        fn = response['Items'][0]['img_filename']
-        if fn != 'none.png':
-            # delete the image of the dish in s3
-            s3 = boto3.resource('s3')
-            bucket = s3.Bucket('delicious-dishes')
-            response = bucket.delete_objects(
-                Delete={
-                    'Objects': [
-                        {
-                            'Key': truck_username+'/'+fn
-                        }
-                    ]
-                }
-            )
-        # delete the dish in table 'menu' in dynamodb
-        response = table.delete_item(
-            Key={
-                'truck_username': truck_username,
-                'dish_name': dish_name
-            }
-        )
-    return redirect(url_for('owner_home', truck_username=truck_username))
-
-
-@webapp.route('/customer/<truck_username>/history_orders', methods=['GET'])
-def history_orders(truck_username):
+@webapp.route('/customer/<customer_name>/<truck_username>/history_orders', methods=['GET'])
+def my_history_orders(customer_name, truck_username):
     """
     Display a list of history orders belonging to the owner
     :param truck_username: the authenticated user
@@ -315,36 +291,28 @@ def history_orders(truck_username):
     """
     # make sure the user is the one logging in the session
     if 'authenticated' not in session:
-        return redirect(url_for('owner_main'))
-    if session.get('username', '') != truck_username:
-        return redirect(url_for('owner_home', truck_username=session['username']))
+        return redirect(url_for('customer_main'))
+    if session.get('username', '') != customer_name:
+        return redirect(url_for('customer_home', customer_name=session['username']))
 
     table = dynamodb.Table('orders')
     # retrieve orders in reverse order of finish_time
     response = table.query(
-        IndexName = 'truck_username-finish_time-index',
-        KeyConditionExpression=Key('truck_username').eq(truck_username) & Key('finish_time').gt(' '),
-        # FilterExpression=Attr('finish').eq(True),
-        ScanIndexForward=False
+        IndexName='customer_username-start_time-index',
+        KeyConditionExpression=Key('truck_username').eq(truck_username) &
+                               Key('customer_username').eq(customer_name),
+
+        FilterExpression=Attr('finish_time').eq(' ') & Attr('new').eq(False),
+        ScanIndexForward=True
     )
-    records = []
-    for i in response['Items']:
-        records.append(i)
-    # while 'LastEvaluatedKey' in response:
-    #     response = table.query(
-    #         IndexName='truck_username-order_no',
-    #         KeyConditionExpression=Key('truck_username').eq(truck_username),
-    #         ExclusiveStartKey=response['LastEvaluatedKey']
-    #         )
-    #
-    #     for i in response['Items']:
-    #         records.append(i)
 
-    return render_template('owner_orders.html', orders=records, title='History Orders', truck_username=truck_username)
+    return render_template('customer_orders.html', customer_name=customer_name,
+                           orders=response['Items'], title='My History Orders')
 
 
-@webapp.route('/customer/<truck_username>/ongoing_orders', methods=['GET'])
-def ongoing_orders(truck_username):
+# display the current on-going orders
+@webapp.route('/customer/<customer_name>/<truck_username>/ongoing_orders', methods=['GET'])
+def my_ongoing_orders(customer_name, truck_username):
     """
     Display a list of ongoing orders belonging to the owner
     :param truck_username: the authenticated user
@@ -352,9 +320,9 @@ def ongoing_orders(truck_username):
     """
     # make sure the user is the one logging in the session
     if 'authenticated' not in session:
-        return redirect(url_for('owner_main'))
-    if session.get('username', '') != truck_username:
-        return redirect(url_for('owner_home', truck_username=session['username']))
+        return redirect(url_for('customer_main'))
+    if session.get('username', '') != customer_name:
+        return redirect(url_for('customer_home', customer_name=session['username']))
 
     table = dynamodb.Table('orders')
     # retrieve orders in order of start_time,
@@ -362,66 +330,17 @@ def ongoing_orders(truck_username):
     # show 'new' ones and not 'new' ones in different color
     # 'new' ones are ones that are going to be shown in this page in the first time
     response = table.query(
-        IndexName='truck_username-start_time-index',
-        KeyConditionExpression=Key('truck_username').eq(truck_username),
-        FilterExpression=Attr('finish_time').eq(' ') & Attr('new').eq(False),
-        ScanIndexForward=True
-    )
-    records = []
-    for i in response['Items']:
-        records.append(i)
+        IndexName='customer_username-start_time-index',
+        KeyConditionExpression=Key('truck_username').eq(truck_username) &
+                               Key('customer_username').eq(customer_name),
 
-    while 'LastEvaluatedKey' in response:
-        response = table.query(
-            IndexName='truck_username-start_time-index',
-            KeyConditionExpression=Key('truck_username').eq(truck_username),
-            FilterExpression=Attr('finish_time').eq(' ') & Attr('new').eq(False),
-            ScanIndexForward=True,
-            ExclusiveStartKey=response['LastEvaluatedKey']
-            )
-
-        for i in response['Items']:
-            records.append(i)
-
-
-    response2 = table.query(
-        IndexName='truck_username-start_time-index',
-        KeyConditionExpression=Key('truck_username').eq(truck_username),
         FilterExpression=Attr('finish_time').eq(' ') & Attr('new').eq(True),
         ScanIndexForward=True
     )
-    records_new = []
-    for i in response2['Items']:
-        records_new.append(i)
 
-    while 'LastEvaluatedKey' in response2:
-        response2 = table.query(
-            IndexName='truck_username-start_time-index',
-            KeyConditionExpression=Key('truck_username').eq(truck_username),
-            FilterExpression=Attr('finish_time').eq(' ') & Attr('new').eq(True),
-            ScanIndexForward=True,
-            ExclusiveStartKey=response2['LastEvaluatedKey']
-        )
-
-        for i in response2['Items']:
-            records_new.append(i)
-
-    # change attribute "new" to False, meaning they're already checked by the truck owner
-    # update_item can only update one item at a time
-    for new_order in records_new:
-        order_no = new_order['order_no']
-        response3 = table.update_item(
-            Key={
-                'order_no': order_no
-            },
-            UpdateExpression="SET new = :value1",
-            ExpressionAttributeValues={
-                ":value1": False
-            }
-        )
-
-    return render_template('owner_orders.html', orders=records, orders_new=records_new, title='Ongoing Orders',
-                           truck_username=truck_username)
+    # note we r using the same template customer_orders.html
+    return render_template('customer_orders.html', customer_name=customer_name,
+                           orders=response['Items'], title='My Ongoing Orders')
 
 
 @webapp.route('/customer/<truck_username>/complete', methods=['POST'])
@@ -453,10 +372,5 @@ def complete_order(truck_username):
         }
     )
     return redirect(url_for('ongoing_orders', truck_username=truck_username))
-
-
-@webapp.route('/customer', methods=['GET'])
-def customer_main():
-    return redirect(url_for('main'))
 
 

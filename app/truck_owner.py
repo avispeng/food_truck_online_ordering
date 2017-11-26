@@ -212,7 +212,8 @@ def dish_added(truck_username):
 
     # connect to s3
     s3 = boto3.resource('s3')
-    bucket = s3.Bucket('delicious-dishes')
+    # bucket = s3.Bucket('delicious-dishes')
+    bucket = s3.Bucket('ut-foodtruck-pics')
 
     if 'photo' in request.files:
         allowed_ext = set(['jpg', 'jpeg', 'png', 'gif'])
@@ -239,7 +240,7 @@ def dish_added(truck_username):
     if fn == 'none.png':
         # copy none.png on s3 to the target truck owner's folder on s3
         copy_source = {
-            'Bucket': 'delicious-dishes',
+            'Bucket': 'ut-foodtruck-pics',
             'Key': 'none.png'
         }
         bucket.copy(copy_source, truck_username+'/none.png')
