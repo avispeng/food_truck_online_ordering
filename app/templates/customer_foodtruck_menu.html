@@ -90,7 +90,7 @@
                 </td>
                 <td>
                     <form action="{{url_for('complete_order', customer_name=customer_name,
-                        truck_username=truck_username, dish_name=dish['dish_name'])}}" method='get'>
+                        truck_username=truck_username, dish_name=dish['dish_name'])}}" method='get' name="order_count">
                         <input type="number" max="100" min="0" class="operation"/>
                         <input type="submit" value="Order">
                     </form>

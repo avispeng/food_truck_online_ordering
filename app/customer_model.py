@@ -344,33 +344,65 @@ def my_ongoing_orders(customer_name, truck_username):
 
 
 @webapp.route('/customer/<truck_username>/complete', methods=['POST'])
-def complete_order(truck_username):
+def complete_order(customer_name, truck_username, dish_name ):
     """
     Complete the specific order and put it in history orders
     :param truck_username: the authenticated user
     :return: to ongoing orders without the order just completed
     """
+
+    # generates a unqiue order id
+    def generate_order_id(customer_name):
+        cur_time = datetime.datetime.now()
+        hstr = customer_name + str(cur_time)
+        ho = hashlib.md5(hstr.encode())
+        return ho.hexdigest()
+
     # make sure the user is the one logging in the session
     if 'authenticated' not in session:
-        return redirect(url_for('owner_main'))
-    if session.get('username', '') != truck_username:
-        return redirect(url_for('owner_home', truck_username=session['username']))
+        return redirect(url_for('customer_main'))
+    if session.get('username', '') != customer_name:
+        return redirect(url_for('customer_home', customer_name=session['username']))
 
-    # retrieve order number from form, and update the table 'orders',
-    # fill in the 'finish_time' with current time
-    # attribute 'history' will be set to True only when the customer is informed and aware of the complete order
-    current = datetime.datetime.now()
-    order_no = request.form.get('complete',"")
+    # get # of orders
+    order_count = request.form.get('order_count', "")
+    dishes=[]
+    while order_count > 0:
+        dishes.append(dish_name)
+        order_count -= 1
+
+    # order_no is as null
+    order_no = ""
+    collision = 1
     table = dynamodb.Table('orders')
-    response = table.update_item(
-        Key={
-            'order_no': order_no
-        },
-        UpdateExpression="SET finish_time = :value1",
-        ExpressionAttributeValues={
-            ":value1": current
+    while collision > 0:
+        # generate a unique order_no, given customer_name and time
+        order_no = generate_order_id(customer_name)
+        # check if order_no exists ---> collision
+        response = table.query(
+            KeyConditionExpression=Key('order_no').eq(order_no)
+        )
+        collision = response['Count']
+
+    # now insert into order table
+    start_time = datetime.datetime.now()
+    # finish_time is " " indicating on going
+    response = table.put_item(
+        Item={
+            'order_no': order_no,
+            'start_time': start_time,
+            'finish_time': " ",
+            "truck_username": truck_username,
+            "customer_username": customer_name,
+            "paid": "Pending for now?",
+            "dishes": dishes,
+            "history": False,
+            "new": True
         }
     )
-    return redirect(url_for('ongoing_orders', truck_username=truck_username))
 
+    print("Debugging response info:\n", response)
+
+    return redirect(url_for('my_ongoing_orders', customer_name=customer_name,
+                            truck_username=truck_username))
 
