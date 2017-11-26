@@ -365,7 +365,7 @@ def ongoing_orders(truck_username):
     response = table.query(
         IndexName='truck_username-start_time-index',
         KeyConditionExpression=Key('truck_username').eq(truck_username),
-        FilterExpression=Attr('finish_time').eq(' ') & Attr('new').eq(False),
+        FilterExpression=Attr('finish_time').eq(' ') & Attr('new_added').eq(False),
         ScanIndexForward=True
     )
     records = []
@@ -376,7 +376,7 @@ def ongoing_orders(truck_username):
         response = table.query(
             IndexName='truck_username-start_time-index',
             KeyConditionExpression=Key('truck_username').eq(truck_username),
-            FilterExpression=Attr('finish_time').eq(' ') & Attr('new').eq(False),
+            FilterExpression=Attr('finish_time').eq(' ') & Attr('new_added').eq(False),
             ScanIndexForward=True,
             ExclusiveStartKey=response['LastEvaluatedKey']
             )
@@ -388,7 +388,7 @@ def ongoing_orders(truck_username):
     response2 = table.query(
         IndexName='truck_username-start_time-index',
         KeyConditionExpression=Key('truck_username').eq(truck_username),
-        FilterExpression=Attr('finish_time').eq(' ') & Attr('new').eq(True),
+        FilterExpression=Attr('finish_time').eq(' ') & Attr('new_added').eq(True),
         ScanIndexForward=True
     )
     records_new = []
@@ -399,7 +399,7 @@ def ongoing_orders(truck_username):
         response2 = table.query(
             IndexName='truck_username-start_time-index',
             KeyConditionExpression=Key('truck_username').eq(truck_username),
-            FilterExpression=Attr('finish_time').eq(' ') & Attr('new').eq(True),
+            FilterExpression=Attr('finish_time').eq(' ') & Attr('new_added').eq(True),
             ScanIndexForward=True,
             ExclusiveStartKey=response2['LastEvaluatedKey']
         )
@@ -415,7 +415,7 @@ def ongoing_orders(truck_username):
             Key={
                 'order_no': order_no
             },
-            UpdateExpression="SET new = :value1",
+            UpdateExpression="SET new_added = :value1",
             ExpressionAttributeValues={
                 ":value1": False
             }

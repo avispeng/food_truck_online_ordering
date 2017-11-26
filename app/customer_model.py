@@ -208,7 +208,7 @@ def my_history_orders(customer_name, truck_username):
     response = table.query(
         IndexName='truck_username-index',
         KeyConditionExpression=Key('truck_username').eq(truck_username),
-        FilterExpression=Attr('finish_time').eq(' ') & Attr('new').eq(False)
+        FilterExpression=Attr('finish_time').eq(' ') & Attr('new_added').eq(False)
                         & Attr('customer_username').eq(customer_name),
 
         ScanIndexForward=True
@@ -241,7 +241,7 @@ def my_ongoing_orders(customer_name, truck_username):
         IndexName='truck_username-index',
         KeyConditionExpression=Key('truck_username').eq(truck_username) ,
 
-        FilterExpression=Attr('finish_time').eq(' ') & Attr('new').eq(True)
+        FilterExpression=Attr('finish_time').eq(' ') & Attr('new_added').eq(True)
                         & Attr('customer_username').eq(customer_name),
         ScanIndexForward=True
     )
@@ -251,8 +251,8 @@ def my_ongoing_orders(customer_name, truck_username):
                            orders=response['Items'], title='My Ongoing Orders')
 
 
-@webapp.route('/customer/<customer_name>/<truck_username>/complete', methods=['POST'])
-def customer_complete_order(customer_name, truck_username, dish_name ):
+@webapp.route('/customer/<customer_name>/<truck_username>/<dish_name>/complete', methods=['POST'])
+def customer_complete_order(customer_name, truck_username, dish_name):
     """
     Complete the specific order and put it in history orders
     :param truck_username: the authenticated user
@@ -271,9 +271,21 @@ def customer_complete_order(customer_name, truck_username, dish_name ):
         return redirect(url_for('customer_main'))
     if session.get('username', '') != customer_name:
         return redirect(url_for('customer_home', customer_name=session['username']))
+    order_count = request.form.get("order_count", "")
+    print("order_count is: ", order_count)
+
+    if order_count == "" or order_count == "0":
+        print("redirecting to select_truck page")
+        return redirect(url_for('select_truck',customer_name=customer_name,
+                                truck_username=truck_username))
 
     # get # of orders
-    order_count = request.form.get('order_count', "")
+    order_count = 0
+    try:
+        order_count = int(order_count)
+    except:
+        return redirect(url_for('select_truck',customer_name=customer_name,
+                                truck_username=truck_username))
     dishes=[]
     while order_count > 0:
         dishes.append(dish_name)
@@ -293,7 +305,7 @@ def customer_complete_order(customer_name, truck_username, dish_name ):
         collision = response['Count']
 
     # now insert into order table
-    start_time = datetime.datetime.now()
+    start_time = str(datetime.datetime.now())
     # finish_time is " " indicating on going
     response = table.put_item(
         Item={
@@ -305,7 +317,7 @@ def customer_complete_order(customer_name, truck_username, dish_name ):
             "paid": "Pending for now?",
             "dishes": dishes,
             "history": False,
-            "new": True
+            "new_added": True
         }
     )
 
