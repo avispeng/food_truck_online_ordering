@@ -33,7 +33,6 @@ def customer_home(customer_name):
                            foodtruck_set=foodtruck_set)
 
 
-
 # check if current session is loggedin
 def check_authentication(customer_name):
     # make sure the user is the one logging in the session
