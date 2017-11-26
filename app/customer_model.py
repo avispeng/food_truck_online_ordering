@@ -26,7 +26,11 @@ def customer_home(customer_name):
         return redirect(url_for('customer_home', customer_name=session['username']))
 
     # this is the correct customer_foodtruck_list
-    return render_template("customer_foodtruck_list.html", customer_name=customer_name)
+    table = dynamodb.Table('trucks')
+    response = table.scan()
+    foodtruck_set = response['Items']
+    return render_template("customer_foodtruck_list.html", customer_name=customer_name,
+                           foodtruck_set=foodtruck_set)
 
 
 
@@ -134,7 +138,7 @@ def customer_signup():
     hashed_pwd = hashlib.sha256(pwd.encode()).hexdigest()
     response = table2.put_item(
         Item={
-            'truck_username': username,
+            'customer_username': username,
             'hashed_pwd': hashed_pwd,
             'salt': salt
         }
@@ -142,7 +146,7 @@ def customer_signup():
     # add to the session
     session['authenticated'] = True
     session['username'] = username
-    return redirect(url_for('customer_home', truck_username=username))
+    return redirect(url_for('customer_home', customer_name=username))
 
 
 # display the menu provided by a particular truck ==> customer_foodtruck_list

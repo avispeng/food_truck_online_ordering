@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block head %}
     <meta charset="UTF-8">
-    <title>{{truck_username}}</title>
+    <title>Hi, what are you having today?</title>
     <style>
         table{
         margin: 3pt;
@@ -51,6 +51,7 @@
     </style>
 {% endblock %}
 {% block body %}
+
 <h1 align="center" id="top">Welcome!</h1>
 <h2 align="center">Select the following foodtrucks </h2>
 <br>
@@ -73,19 +74,20 @@
                 <td>{{foodtruck['truck_username']}}</td>
                 <td><p>food truck map location: to be implemented</p></td>
                 <td>
-                    <img src="https://delicious-dishes.s3.amazonaws.com/{{truck_username}}/{{dish['img_filename']}}"
+                    <img src="https://delicious-dishes.s3.amazonaws.com/"
                                  alt="Food Truck Photo Data: To be implemeneted by changing the table structure"
                                  style="width:225px;height:225px;">
                 </td>
                 <td>
-                    <form action="{{url_for('select_truck', customer_name=customer_name, truck_username=foodtruck['truck_username'],
-                    customer_name=customer_name)}}" method='get'>
+                    <form action="{{url_for('select_truck', customer_name=customer_name,
+                    truck_username=foodtruck['truck_username'])}}" method='get'>
                         <input type='submit' value='Select' class="operation"/>
                     </form>
                 </td>
             </tr>
         {% endfor %}
-    </table><br>
+    </table>
+    <br>
     <a href="#top">Go to Top</a>
 </div>
 {% endblock %}
