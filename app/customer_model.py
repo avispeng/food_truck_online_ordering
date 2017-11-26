@@ -206,11 +206,11 @@ def my_history_orders(customer_name, truck_username):
     table = dynamodb.Table('orders')
     # retrieve orders in reverse order of finish_time
     response = table.query(
-        IndexName='customer_username-start_time-index',
-        KeyConditionExpression=Key('truck_username').eq(truck_username) &
-                               Key('customer_username').eq(customer_name),
+        IndexName='truck_username-index',
+        KeyConditionExpression=Key('truck_username').eq(truck_username),
+        FilterExpression=Attr('finish_time').eq(' ') & Attr('new').eq(False)
+                        & Attr('customer_username').eq(customer_name),
 
-        FilterExpression=Attr('finish_time').eq(' ') & Attr('new').eq(False),
         ScanIndexForward=True
     )
 
@@ -238,11 +238,11 @@ def my_ongoing_orders(customer_name, truck_username):
     # show 'new' ones and not 'new' ones in different color
     # 'new' ones are ones that are going to be shown in this page in the first time
     response = table.query(
-        IndexName='customer_username-start_time-index',
-        KeyConditionExpression=Key('truck_username').eq(truck_username) &
-                               Key('customer_username').eq(customer_name),
+        IndexName='truck_username-index',
+        KeyConditionExpression=Key('truck_username').eq(truck_username) ,
 
-        FilterExpression=Attr('finish_time').eq(' ') & Attr('new').eq(True),
+        FilterExpression=Attr('finish_time').eq(' ') & Attr('new').eq(True)
+                        & Attr('customer_username').eq(customer_name),
         ScanIndexForward=True
     )
 
