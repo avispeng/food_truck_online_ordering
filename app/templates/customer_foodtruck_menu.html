@@ -67,7 +67,7 @@
         </form>
     </div>
     <div style="display: inline-block;">
-        <form action="{{url_for('logout')}}" method="get">
+        <form action="{{url_for('customer_logout')}}" method="get">
             <input type='submit' value='Log out' class="topButtons" />
         </form>
     </div>
@@ -89,7 +89,7 @@
                                  style="width:120px;height:120px;">
                 </td>
                 <td>
-                    <form action="{{url_for('complete_order', customer_name=customer_name,
+                    <form action="{{url_for('customer_complete_order', customer_name=customer_name,
                         truck_username=truck_username, dish_name=dish['dish_name'])}}" method='get' name="order_count">
                         <input type="number" max="100" min="0" class="operation"/>
                         <input type="submit" value="Order">

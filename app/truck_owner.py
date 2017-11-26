@@ -456,8 +456,8 @@ def complete_order(truck_username):
     return redirect(url_for('ongoing_orders', truck_username=truck_username))
 
 
-@webapp.route('/customer', methods=['GET'])
-def customer_main():
-    return redirect(url_for('main'))
+# @webapp.route('/customer', methods=['GET'])
+# def customer_main():
+#     return redirect(url_for('main'))
 
 

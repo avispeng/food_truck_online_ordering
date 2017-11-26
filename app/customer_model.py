@@ -176,7 +176,7 @@ def select_truck(customer_name, truck_username):
 
 
 @webapp.route('/customer/logout', methods=['GET'])
-def logout():
+def customer_logout():
     """
     Log out from the current account
     :param truck_username: authenticated user
@@ -185,101 +185,6 @@ def logout():
     # session.pop('username', None)
     session.clear()
     return redirect(url_for('main'))
-
-
-@webapp.route('/<customer>/<truck_username>/<dish_name>/add_dish', methods=['GET'])
-def add_dish(customer_name, truck_username, dish_name):
-    """
-    Enter the page where the truck owner can add a dish to his or her menu
-    :param truck_username: authenticated user
-    :return: a html page
-    """
-    # make sure the user is the one logging in the session
-    if 'authenticated' not in session:
-        return redirect(url_for('customer_main'))
-    if session.get('username', '') != customer_name :
-        return redirect(url_for('select_truck', truck_username=session['username']))
-
-
-
-@webapp.route('/customer/<truck_username>/dish_added', methods=['POST'])
-def dish_added(truck_username):
-    """
-    Update the menu with newly added dish
-    :param truck_username: authenticated user
-    :return: truck owner's home page
-    """
-    # make sure the user is the one logging in the session
-    if 'authenticated' not in session:
-        return redirect(url_for('owner_main'))
-    if session.get('username', '') != truck_username:
-        return redirect(url_for('owner_home', truck_username=session['username']))
-
-    dish_name = request.form.get('dish_name', "")
-    price = request.form.get('price', "")
-
-    # avoid repeating
-    table = dynamodb.Table('menu')
-    response = table.query(
-        KeyConditionExpression=Key('truck_username').eq(truck_username) & Key('dish_name').eq(dish_name)
-    )
-    error = False
-    if response['Count'] != 0:
-        error = True
-        error_msg = "Error: This dish already exists!"
-    if error:
-        return render_template("add_dish.html", title="Add One Dish", truck_username=truck_username, error_msg=error_msg)
-
-    # connect to s3
-    s3 = boto3.resource('s3')
-    bucket = s3.Bucket('delicious-dishes')
-
-    if 'photo' in request.files:
-        allowed_ext = set(['jpg', 'jpeg', 'png', 'gif'])
-        photo = request.files['photo']
-        fn = photo.filename
-        if '.' in fn and fn.rsplit('.', 1)[1].lower() in allowed_ext:
-            # handling filename length
-            if len(fn) > 30:
-                rez = fn.rsplit('.', 1)
-                fn = rez[0][0:26] + "." + rez[1]
-            if fn == 'none.png':
-                fn = dish_name + '.png'
-            # upload the photo to owner's folder in s3
-            response = bucket.put_object(
-                ACL='public-read',
-                Body=photo,
-                Key=truck_username + '/' + fn
-            )
-        else:
-            fn = 'none.png'
-    else:
-        fn = 'none.png'
-
-    if fn == 'none.png':
-        # copy none.png on s3 to the target truck owner's folder on s3
-        copy_source = {
-            'Bucket': 'delicious-dishes',
-            'Key': 'none.png'
-        }
-        bucket.copy(copy_source, truck_username+'/none.png')
-        # client = boto3.client('s3')
-        # response = client.get_object(
-        #     Bucket='delicious-dishes',
-        #     Key='none.png'
-        # )
-        # photo = response['Body']
-
-    # save to dynamodb
-    response = table.put_item(
-        Item={
-            'truck_username': truck_username,
-            'dish_name': dish_name,
-            'price': price,
-            'img_filename': fn
-        }
-    )
-    return redirect(url_for('owner_home', truck_username=truck_username))
 
 
 @webapp.route('/customer/<customer_name>/<truck_username>/history_orders', methods=['GET'])
@@ -343,8 +248,8 @@ def my_ongoing_orders(customer_name, truck_username):
                            orders=response['Items'], title='My Ongoing Orders')
 
 
-@webapp.route('/customer/<truck_username>/complete', methods=['POST'])
-def complete_order(customer_name, truck_username, dish_name ):
+@webapp.route('/customer/<customer_name>/<truck_username>/complete', methods=['POST'])
+def customer_complete_order(customer_name, truck_username, dish_name ):
     """
     Complete the specific order and put it in history orders
     :param truck_username: the authenticated user
