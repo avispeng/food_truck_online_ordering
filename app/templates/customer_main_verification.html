@@ -22,7 +22,7 @@
         background: #034569;
         }
 
-        input[type=text] {
+        .text_box {
         width:220px;
         height:60px;
         padding: 12px 20px;
@@ -41,13 +41,21 @@
 <body>
         <center>
         <form action="{{url_for('customer_signup')}}" method="post" >
-             <b>enter SMS verification code below</b><br>
+            <b>Set your password (6 to 20 characters):</b><br>
+            <input type="password" name="password" class="text_box" required>
             <br>
-            <input type="text" name="verification_code">
+            <br>
+
+            <b>Enter SMS verification code below</b><br>
+            <br>
+            <input type="text" name="verification_code" class="text_box">
             <br>
             <p id="signup_response" class="errormsg">{{signup_error_msg if signup_error_msg != None}}
         </p>
         <input type="submit" value="Submit and Sign-up" class="submit_button" >
+
+
+
         </form>
 
             <form action="{{url_for('customer_main')}}" method="get">

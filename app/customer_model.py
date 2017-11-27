@@ -99,11 +99,25 @@ def customer_signup():
     :return: the authenticated owner's home page
     """
     username = session['username']
-    pwd = session['pwd']
-    if username is None or pwd is None:
-        error_msg = "Error: username or password failed to submit"
+    if username is None:
+        error_msg = "Error: username failed to submit"
         return render_template("customer_main.html", title="Customer Page", signup_error_msg=error_msg,
                                sign_username=username)
+
+    # sanity check for pwd
+    pwd = request.form.get('password')
+    if len(pwd) < 6 or len(pwd) > 20:
+        error_msg = "Error: Invalid Username or Password Length"
+        return render_template("customer_main.html", title="Customer Page", signup_error_msg=error_msg,
+                               sign_username=username)
+    numdic = "0123456789"
+    # check if the username is valid
+    for char in username:
+        if char not in numdic:
+            error=True
+            error_msg = "Error: Username Must Be Your 10 Digit Cellphone Number"
+            return render_template("customer_main.html", title="Customer Page", signup_error_msg=error_msg,
+                                   sign_username=username)
 
     # customer table2
     table2 = dynamodb.Table('customers')
@@ -323,27 +337,16 @@ def customer_complete_order(customer_name, truck_username, dish_name):
 @webapp.route('/customer/request_activation', methods=['post'])
 def request_verification():
     username = request.form.get('new_username')
-    pwd = request.form.get('new_password')
+
 
     # check length of input
     error = False
-    if len(username) != 10 or len(pwd)<6 or len(pwd)>20:
+    if len(username) != 10:
         error=True
         error_msg = "Error: Invalid Username or Password Length"
     if error:
         return render_template("customer_main.html", title="Customer Page", signup_error_msg=error_msg,
                                sign_username=username)
-
-    alphabet = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-    numdic = "0123456789"
-    # check if the username is valid
-    for char in username:
-        if char not in numdic:
-            error=True
-            error_msg = "Error: Username Must Be Your 10 Digit Cellphone Number"
-        if error:
-            return render_template("customer_main.html", title="Customer Page", signup_error_msg=error_msg,
-                                   sign_username=username)
 
     # check whether username exists in customers table
     table2 = dynamodb.Table('customers')
@@ -360,7 +363,6 @@ def request_verification():
 
     # store in session for now!!! will erase after verification
     session['username'] = username
-    session['pwd'] = pwd
 
     # here sanity check is done
     send_confirmation_code(username)
