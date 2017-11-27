@@ -32,7 +32,7 @@ def notification():
             response3 = table3.query(
                 IndexName='truck_username-start_time-index',
                 KeyConditionExpression=Key('truck_username').eq(username),
-                FilterExpression=Attr('new').eq(True),
+                FilterExpression=Attr('new_order').eq(True),
                 ScanIndexForward=False  # latest orders come first
             )
             if response3['Count'] > 0:

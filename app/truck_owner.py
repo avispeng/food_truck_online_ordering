@@ -5,6 +5,8 @@ import hashlib
 import boto3
 from boto3.dynamodb.conditions import Key, Attr
 import datetime
+from app.customer import send_sms
+from app import config
 
 dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
 
@@ -168,11 +170,10 @@ def owner_home(truck_username):
                            truck_location=truck_location, photo=photo)
 
 
-@webapp.route('/owner/logout', methods=['GET'])
+@webapp.route('/logout', methods=['GET'])
 def logout():
     """
     Log out from the current account
-    :param truck_username: authenticated user
     :return: welcome page
     """
     # session.pop('username', None)
@@ -383,7 +384,7 @@ def ongoing_orders(truck_username):
     response = table.query(
         IndexName='truck_username-start_time-index',
         KeyConditionExpression=Key('truck_username').eq(truck_username),
-        FilterExpression=Attr('finish_time').eq(' ') & Attr('new').eq(False),
+        FilterExpression=Attr('finish_time').eq(' ') & Attr('new_order').eq(False),
         ScanIndexForward=True
     )
     records = []
@@ -394,7 +395,7 @@ def ongoing_orders(truck_username):
         response = table.query(
             IndexName='truck_username-start_time-index',
             KeyConditionExpression=Key('truck_username').eq(truck_username),
-            FilterExpression=Attr('finish_time').eq(' ') & Attr('new').eq(False),
+            FilterExpression=Attr('finish_time').eq(' ') & Attr('new_order').eq(False),
             ScanIndexForward=True,
             ExclusiveStartKey=response['LastEvaluatedKey']
             )
@@ -406,7 +407,7 @@ def ongoing_orders(truck_username):
     response2 = table.query(
         IndexName='truck_username-start_time-index',
         KeyConditionExpression=Key('truck_username').eq(truck_username),
-        FilterExpression=Attr('finish_time').eq(' ') & Attr('new').eq(True),
+        FilterExpression=Attr('finish_time').eq(' ') & Attr('new_order').eq(True),
         ScanIndexForward=True
     )
     records_new = []
@@ -417,7 +418,7 @@ def ongoing_orders(truck_username):
         response2 = table.query(
             IndexName='truck_username-start_time-index',
             KeyConditionExpression=Key('truck_username').eq(truck_username),
-            FilterExpression=Attr('finish_time').eq(' ') & Attr('new').eq(True),
+            FilterExpression=Attr('finish_time').eq(' ') & Attr('new_order').eq(True),
             ScanIndexForward=True,
             ExclusiveStartKey=response2['LastEvaluatedKey']
         )
@@ -433,7 +434,7 @@ def ongoing_orders(truck_username):
             Key={
                 'order_no': order_no
             },
-            UpdateExpression="SET new = :value1",
+            UpdateExpression="SET new_order = :value1",
             ExpressionAttributeValues={
                 ":value1": False
             }
@@ -460,7 +461,7 @@ def complete_order(truck_username):
     # retrieve order number from form, and update the table 'orders',
     # fill in the 'finish_time' with current time
     # attribute 'history' will be set to True only when the customer is informed and aware of the complete order
-    current = datetime.datetime.now()
+    current = str(datetime.datetime.now())
     order_no = request.form.get('complete',"")
     table = dynamodb.Table('orders')
     response = table.update_item(
@@ -472,6 +473,15 @@ def complete_order(truck_username):
             ":value1": current
         }
     )
+
+    # send a notification message to the customer's phone
+    response2 = table.query(
+        KeyConditionExpression=Key('order_no').eq(order_no),
+    )
+    cell = response2['Items'][0]['customer_username']
+    msg = "Hey. You have an order from {} just completed. Please have a look at ongoing orders' page.".format(truck_username)
+    send_sms(cell, msg)
+
     return redirect(url_for('ongoing_orders', truck_username=truck_username))
 
 
@@ -597,9 +607,9 @@ def owner_setting_submit(truck_username):
 
     return redirect(url_for('owner_home', truck_username=truck_username))
 
-
-@webapp.route('/customer', methods=['GET'])
-def customer_main():
-    return redirect(url_for('main'))
+#
+# @webapp.route('/customer', methods=['GET'])
+# def customer_main():
+#     return redirect(url_for('main'))
 
 

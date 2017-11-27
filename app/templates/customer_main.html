@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{title}}</title>
+    <style>
+        h1{
+        font-size:4em;
+        font-family: "Times New Roman", Times, serif;
+        }
+        fieldset {
+        width:50%;
+        }
+        input[type=submit] {
+        font-size: 1.6em;
+        font-family: Verdana, sans-serif;
+        width:200px;
+        height:60px;
+        color: white;
+        padding: 5px 10px;
+        margin: 5px 10px;
+        <!--border-radius: 5px;-->
+        border-style: outset;
+        border-color: #000;
+        background: #64AAD0;
+        }
+        input[type=submit]:hover{
+        background: #034569;
+        }
+        p.errormsg{
+        color:#3C9DD0;
+        }
+    </style>
+    <script type="text/javascript"
+      src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
+    <script type="text/javascript">
+        function sendCode(){
+            var cell = document.getElementById('cellNumber').value;
+            $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
+            $.getJSON($SCRIPT_ROOT+"/_request_activation/"+cell,
+                function(data) {
+                    $("#signup_response").text(data.msg)
+
+                });
+        }
+    </script>
+</head>
+<body>
+<center>
+    <h1>Hi, UT Students!</h1>
+    <form action="{{url_for('customer_login')}}" method="post">
+    <fieldset>
+        <legend>Login:</legend>
+        <b>phone number :</b><br>
+        <input type="text" name="username" value="{{log_username if log_username != None}}" required><br><br>
+        <b>password :</b><br>
+        <input type="password" name="password" required><br>
+        <p id="login_error" class="errormsg">{{login_error_msg if login_error_msg != None}}</p>
+        <input type="submit" name="login" value="Login">
+    </fieldset>
+    </form>
+    <br>
+    <b>Don't have an account? Sign up here!</b>
+    <br>
+    <form action="{{url_for('customer_signup')}}" method="post">
+    <fieldset>
+        <legend>Signup:</legend>
+        <b>phone number :(10-digit Canadian number)</b><br>
+        <input type="text" name="new_username" id="cellNumber" value="{{sign_username if sign_username != None}}" required><br><br>
+        <b>verification code :</b><br>
+        <input type="text" name="verification_code" style="width:150px;" required>
+        <button onclick="sendCode();" type="button">Send</button><br><br>
+        <b>password :(6 to 20 characters)</b><br>
+        <input type="password" name="new_password" required><br>
+        <p id="signup_response" class="errormsg">{{signup_error_msg if signup_error_msg != None}}</p>
+        <input type="submit" name="signup" value="Signup">
+    </fieldset>
+    </form>
+</center>
+</body>
+</html>

@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block head %}
+    <meta charset="UTF-8">
+    <title>Hi, what are you having today?</title>
+    <style>
+        table{
+        margin: 3pt;
+        }
+        th{
+        padding-top: 12px;
+        padding-bottom: 12px;
+        text-align: center;
+        background-color: #034569;
+        color:white;
+        }
+        td {
+        width:225px;
+        height:225px;
+        text-align: center;
+        border: 1px solid #ddd;
+        }
+        input.topButtons[type=submit] {
+        font-size: 1em;
+        font-family: Verdana, sans-serif;
+        width:150px;
+        height:40px;
+        color: white;
+        padding: 5px 10px;
+        margin: 5px 10px;
+        border-style: outset;
+        border-color: #000;
+        background: #64AAD0;
+
+        }
+        input.topButtons[type=submit]:hover{
+        background: #034569;
+        }
+
+        input.operation[type=submit] {
+        font-size: 0.9em;
+        font-family: Verdana, sans-serif;
+        width:120px;
+        height:30px;
+        color: white;
+        padding: 5px 10px;
+        margin: 5px 10px;
+        border-style: outset;
+        border-color: #000;
+        background: #034569;
+        }
+    </style>
+{% endblock %}
+{% block body %}
+
+<h1 align="center" id="top">Welcome!</h1>
+<h2 align="center">Select the following foodtrucks </h2>
+<br>
+<div align="center">
+    <div style="display: inline-block;">
+        <form action="{{url_for('my_history_orders', customer_name=customer_name)}}"
+              method="get">
+            <input type='submit' value='History Orders' class="topButtons" />
+        </form>
+    </div>
+    <div style="display: inline-block;">
+        <form action="{{url_for('my_ongoing_orders', customer_name=customer_name)}}"
+              method="get">
+            <input type='submit' value='Ongoing Orders' class="topButtons" />
+        </form>
+    </div>
+    <div style="display: inline-block;">
+        <form action="{{url_for('logout')}}" method="get">
+            <input type='submit' value='Log out' class="topButtons" />
+        </form>
+    </div>
+    <br>
+    <table>
+        <thead>
+        <th>Foodtruck Name</th>
+        <th>Map Location</th>
+        <th>Photo</th>
+        <th>Go to</th>
+        </thead>
+        {% for foodtruck in foodtruck_set %}
+            <tr>
+                <td>{{foodtruck['truck_username']}}</td>
+                <td>{{foodtruck['truck_location']}}</td>
+                <td>
+                    <img src="https://delicious-dishes.s3.amazonaws.com/{{foodtruck['photo_name']}}"
+                                 alt="https://delicious-dishes.s3.amazonaws.com/{{foodtruck['photo_name']}}"
+                                 style="width:225px;height:225px;">
+                </td>
+                <td>
+                    <form action="{{url_for('select_truck', customer_name=customer_name,
+                    truck_username=foodtruck['truck_username'])}}" method='get'>
+                        <input type='submit' value='Select' class="operation"/>
+                    </form>
+                </td>
+            </tr>
+        {% endfor %}
+    </table>
+    <br>
+    <a href="#top">Go to Top</a>
+</div>
+{% endblock %}
