@@ -6,7 +6,7 @@ import boto3
 from boto3.dynamodb.conditions import Key, Attr
 import datetime
 from app.customer import send_sms
-from app import config
+
 
 dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
 

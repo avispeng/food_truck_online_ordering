@@ -59,6 +59,9 @@
         <p id="signup_response" class="errormsg">{{signup_error_msg if signup_error_msg != None}}</p>
         <input type="submit" name="signup" value="Signup">
     </fieldset>
+    </form><br>
+    <form action="{{url_for('main')}}" method="get">
+        <input type="submit" value="Back" class="topButtons">
     </form>
 </center>
 </body>
