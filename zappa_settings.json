@@ -5,7 +5,7 @@
         "profile_name": "default",
         "project_name": "foodtruck",
         "runtime": "python3.6",
-        "s3_bucket": "cloud-computing-photo-storage",
+        "s3_bucket": "bucket-a2-testloadbalancer-us-east-1.elb.amazonaws.com",
         "keep_warm": false,
         "debug": true,
         "log_level": "DEBUG",

@@ -228,7 +228,8 @@ def dish_added(truck_username):
 
     # connect to s3
     s3 = boto3.resource('s3')
-    bucket = s3.Bucket('delicious-dishes')
+    # bucket = s3.Bucket('delicious-dishes')
+    bucket = s3.Bucket('ut-foodtruck-pics')
 
     if 'photo' in request.files:
         allowed_ext = set(['jpg', 'jpeg', 'png', 'gif'])
@@ -255,7 +256,7 @@ def dish_added(truck_username):
     if fn == 'none.png':
         # copy none.png on s3 to the target truck owner's folder on s3
         copy_source = {
-            'Bucket': 'delicious-dishes',
+            'Bucket': 'ut-foodtruck-pics',
             'Key': 'none.png'
         }
         bucket.copy(copy_source, truck_username+'/none.png')
@@ -383,7 +384,7 @@ def ongoing_orders(truck_username):
     response = table.query(
         IndexName='truck_username-start_time-index',
         KeyConditionExpression=Key('truck_username').eq(truck_username),
-        FilterExpression=Attr('finish_time').eq(' ') & Attr('new').eq(False),
+        FilterExpression=Attr('finish_time').eq(' ') & Attr('new_added').eq(False),
         ScanIndexForward=True
     )
     records = []
@@ -394,7 +395,7 @@ def ongoing_orders(truck_username):
         response = table.query(
             IndexName='truck_username-start_time-index',
             KeyConditionExpression=Key('truck_username').eq(truck_username),
-            FilterExpression=Attr('finish_time').eq(' ') & Attr('new').eq(False),
+            FilterExpression=Attr('finish_time').eq(' ') & Attr('new_added').eq(False),
             ScanIndexForward=True,
             ExclusiveStartKey=response['LastEvaluatedKey']
             )
@@ -406,7 +407,7 @@ def ongoing_orders(truck_username):
     response2 = table.query(
         IndexName='truck_username-start_time-index',
         KeyConditionExpression=Key('truck_username').eq(truck_username),
-        FilterExpression=Attr('finish_time').eq(' ') & Attr('new').eq(True),
+        FilterExpression=Attr('finish_time').eq(' ') & Attr('new_added').eq(True),
         ScanIndexForward=True
     )
     records_new = []
@@ -417,7 +418,7 @@ def ongoing_orders(truck_username):
         response2 = table.query(
             IndexName='truck_username-start_time-index',
             KeyConditionExpression=Key('truck_username').eq(truck_username),
-            FilterExpression=Attr('finish_time').eq(' ') & Attr('new').eq(True),
+            FilterExpression=Attr('finish_time').eq(' ') & Attr('new_added').eq(True),
             ScanIndexForward=True,
             ExclusiveStartKey=response2['LastEvaluatedKey']
         )
@@ -433,7 +434,7 @@ def ongoing_orders(truck_username):
             Key={
                 'order_no': order_no
             },
-            UpdateExpression="SET new = :value1",
+            UpdateExpression="SET new_added = :value1",
             ExpressionAttributeValues={
                 ":value1": False
             }
@@ -598,8 +599,5 @@ def owner_setting_submit(truck_username):
     return redirect(url_for('owner_home', truck_username=truck_username))
 
 
-@webapp.route('/customer', methods=['GET'])
-def customer_main():
-    return redirect(url_for('main'))
 
 

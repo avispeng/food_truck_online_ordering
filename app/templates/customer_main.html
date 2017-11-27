@@ -11,7 +11,7 @@
         fieldset {
         width:50%;
         }
-        input[type=submit] {
+        .submit_button {
         font-size: 1.6em;
         font-family: Verdana, sans-serif;
         width:200px;
@@ -34,7 +34,7 @@
 </head>
 <body>
 <center>
-    <h2>Hi, UT Students, Register With Your Cellphone Number</h2>
+    <h2>Hi, UT Students</h2>
     <form action="{{url_for('customer_login')}}" method="post">
     <fieldset>
         <legend>Login:</legend>
@@ -43,23 +43,32 @@
         <b>password :</b><br>
         <input type="password" name="password" required><br>
         <p id="login_error" class="errormsg">{{login_error_msg if login_error_msg != None}}</p>
-        <input type="submit" name="login" value="Login">
+        <input type="submit" name="login" value="Login" class="submit_button">
     </fieldset>
     </form>
     <br>
     <b>Don't have an account? Sign up here!</b>
     <br>
-    <form action="{{url_for('customer_signup')}}" method="post">
+
     <fieldset>
         <legend>Signup:</legend>
-        <b>username(It'll be used as your Truck's name.) :(6 to 20 characters)</b><br>
+        <form action="{{url_for('request_verification')}}" method="post">
+
+        <b>username( please use your 10 digit cell phone number )</b><br>
         <input type="text" name="new_username" value="{{sign_username if sign_username != None}}" required><br><br>
         <b>password :(6 to 20 characters)</b><br>
         <input type="password" name="new_password" required><br>
-        <p id="signup_response" class="errormsg">{{signup_error_msg if signup_error_msg != None}}</p>
-        <input type="submit" name="signup" value="Signup">
+            <br>
+
+        <p id="signup_response" class="errormsg">{{signup_error_msg if signup_error_msg != None}}
+        </p>
+
+        <input type="submit" name="signup" value="Continue" class="submit_button">
+        </form>
+
     </fieldset>
-    </form>
+
+
 </center>
 </body>
 </html>

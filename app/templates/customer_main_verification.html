@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Verification</title>
+    <style>
+        .submit_button {
+        font-size: 1.2em;
+        font-family: Verdana, sans-serif;
+        width:220px;
+        height:60px;
+        color: white;
+        padding: 5px 10px;
+        margin: 5px 10px;
+        <!--border-radius: 5px;-->
+        border-style: outset;
+        border-color: #000;
+        background: #64AAD0;
+        }
+
+        input[type=submit]:hover{
+        background: #034569;
+        }
+
+        input[type=text] {
+        width:220px;
+        height:60px;
+        padding: 12px 20px;
+        margin: 8px 0;
+        display: inline-block;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        box-sizing: border-box;
+        }
+
+        p.errormsg{
+        color:#3C9DD0;
+        }
+    </style>
+</head>
+<body>
+        <center>
+        <form action="{{url_for('customer_signup')}}" method="post" >
+             <b>enter SMS verification code below</b><br>
+            <br>
+            <input type="text" name="verification_code">
+            <br>
+            <p id="signup_response" class="errormsg">{{signup_error_msg if signup_error_msg != None}}
+        </p>
+        <input type="submit" value="Submit and Sign-up" class="submit_button" >
+        </form>
+
+            <form action="{{url_for('customer_main')}}" method="get">
+            <input type="submit" value="Back" class="submit_button">
+            </form>
+        </center>
+</body>
+</html>
