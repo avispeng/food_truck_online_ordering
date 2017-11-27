@@ -132,7 +132,8 @@ def owner_home(truck_username):
     if 'authenticated' not in session:
         return redirect(url_for('owner_main'))
     if session.get('username', '') != truck_username:
-        return redirect(url_for('owner_home', truck_username=session['username']))
+        session.clear()
+        return render_template('access_denied.html')
 
     table = dynamodb.Table('menu')
     # get the list of dishes provided by this truck
@@ -151,7 +152,20 @@ def owner_home(truck_username):
         for i in response['Items']:
             records.append(i)
 
-    return render_template("owner_home.html", dishes=records, truck_username=truck_username)
+    # get the truck's location and photo
+    table2 = dynamodb.Table('trucks')
+    response = table2.query(
+        KeyConditionExpression=Key('truck_username').eq(truck_username)
+    )
+    this_owner = response['Items'][0]
+    truck_location = this_owner.get('truck_location', '')
+    photo = this_owner.get('photo_name', '')
+    if truck_location == '':
+        truck_location = None
+    if photo == '':
+        photo = None
+    return render_template("owner_home.html", dishes=records, truck_username=truck_username,
+                           truck_location=truck_location, photo=photo)
 
 
 @webapp.route('/owner/logout', methods=['GET'])
@@ -177,7 +191,8 @@ def add_dish(truck_username):
     if 'authenticated' not in session:
         return redirect(url_for('owner_main'))
     if session.get('username', '') != truck_username:
-        return redirect(url_for('owner_home', truck_username=session['username']))
+        session.clear()
+        return render_template('access_denied.html')
 
     return render_template("add_dish.html", title="Add One Dish", truck_username=truck_username)
 
@@ -193,7 +208,8 @@ def dish_added(truck_username):
     if 'authenticated' not in session:
         return redirect(url_for('owner_main'))
     if session.get('username', '') != truck_username:
-        return redirect(url_for('owner_home', truck_username=session['username']))
+        session.clear()
+        return render_template('access_denied.html')
 
     dish_name = request.form.get('dish_name', "")
     price = request.form.get('price', "")
@@ -275,7 +291,8 @@ def delete_dish(truck_username, dish_name):
     if 'authenticated' not in session:
         return redirect(url_for('owner_main'))
     if session.get('username', '') != truck_username:
-        return redirect(url_for('owner_home', truck_username=session['username']))
+        session.clear()
+        return render_template('access_denied.html')
 
     # get image filename from dynamodb
     table = dynamodb.Table('menu')
@@ -318,7 +335,8 @@ def history_orders(truck_username):
     if 'authenticated' not in session:
         return redirect(url_for('owner_main'))
     if session.get('username', '') != truck_username:
-        return redirect(url_for('owner_home', truck_username=session['username']))
+        session.clear()
+        return render_template('access_denied.html')
 
     table = dynamodb.Table('orders')
     # retrieve orders in reverse order of finish_time
@@ -355,7 +373,8 @@ def ongoing_orders(truck_username):
     if 'authenticated' not in session:
         return redirect(url_for('owner_main'))
     if session.get('username', '') != truck_username:
-        return redirect(url_for('owner_home', truck_username=session['username']))
+        session.clear()
+        return render_template('access_denied.html')
 
     table = dynamodb.Table('orders')
     # retrieve orders in order of start_time,
@@ -436,7 +455,8 @@ def complete_order(truck_username):
     if 'authenticated' not in session:
         return redirect(url_for('owner_main'))
     if session.get('username', '') != truck_username:
-        return redirect(url_for('owner_home', truck_username=session['username']))
+        session.clear()
+        return render_template('access_denied.html')
 
     # retrieve order number from form, and update the table 'orders',
     # fill in the 'finish_time' with current time
@@ -459,5 +479,133 @@ def complete_order(truck_username):
 # @webapp.route('/customer', methods=['GET'])
 # def customer_main():
 #     return redirect(url_for('main'))
+@webapp.route('/customer', methods=['GET'])
+def customer_main():
+    return redirect(url_for('main'))
+
+
+@webapp.route('/owner/<truck_username>/<photo>/show', methods=['GET'])
+def show_photo(truck_username, photo):
+    """
+    display the photo of the truck
+    :param truck_username: the authenticated user
+    :param photo: the name of the truck's photo
+    :return: a html page
+    """
+    # make sure the user is the one logging in the session
+    if 'authenticated' not in session:
+        return redirect(url_for('owner_main'))
+    if session.get('username', '') != truck_username:
+        session.clear()
+        return render_template('access_denied.html')
+
+    return render_template('truck_photo.html', truck_username=truck_username, photo=photo)
+
+
+
+
+@webapp.route('/owner/<truck_username>/setting', methods=['GET'])
+def owner_setting(truck_username):
+    """
+    Set the photo and the location of the truck
+    :param truck_username: the authenticated user
+    :return: a setting page
+    """
+    # make sure the user is the one logging in the session
+    if 'authenticated' not in session:
+        return redirect(url_for('owner_main'))
+    if session.get('username', '') != truck_username:
+        session.clear()
+        return render_template('access_denied.html')
+
+    return render_template('owner_set.html', truck_username=truck_username)
+
+
+@webapp.route('/owner/<truck_username>/set', methods=['POST'])
+def owner_setting_submit(truck_username):
+    """
+    location and photo are submitted
+    :param truck_username: the authenticated user
+    :return: home page
+    """
+    # make sure the user is the one logging in the session
+    if 'authenticated' not in session:
+        return redirect(url_for('owner_main'))
+    if session.get('username', '') != truck_username:
+        session.clear()
+        return render_template('access_denied.html')
+
+    table = dynamodb.Table('trucks')
+    response = table.query(
+        KeyConditionExpression=Key('truck_username').eq(truck_username)
+    )
+
+    location = request.form.get('location', '')
+    # photo = request.files.get('photo_file', '')
+
+    if location != '':
+        error = False
+        if len(location) > 100:
+            error = True
+            error_msg = 'Error: Location is too long. Please keep it within 100 characters!'
+        if error:
+            return render_template('owner_set.html', truck_username=truck_username, error_msg=error_msg, location_set=location)
+
+        alphabet = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ ,.#"
+        for char in location:
+            if char not in alphabet:
+                error = True
+                error_msg = 'Error: Invalid characters in location!'
+            if error:
+                return render_template('owner_set.html', truck_username=truck_username, error_msg=error_msg, location_set=location)
+
+        response = table.update_item(
+            Key={
+                'truck_username': truck_username
+            },
+            UpdateExpression="SET truck_location = :value1",
+            ExpressionAttributeValues={
+                ":value1": location
+            }
+        )
+
+    if 'photo_file' in request.files:
+        photo = request.files['photo_file']
+        fn = photo.filename
+        if fn != '':
+            error = False
+            allowed_ext = set(['jpg', 'jpeg', 'png', 'gif'])
+            if '.' in fn and fn.rsplit('.', 1)[1].lower() in allowed_ext:
+                extension = fn.rsplit('.', 1)[1]
+                # connect to s3
+                s3 = boto3.resource('s3')
+                bucket = s3.Bucket('delicious-dishes')
+
+                # upload the photo to s3
+                response = bucket.put_object(
+                    ACL='public-read',
+                    Body=photo,
+                    Key=truck_username + '.' + extension
+                )
+                # add to database
+                response = table.update_item(
+                    Key={
+                        'truck_username': truck_username
+                    },
+                    UpdateExpression="SET photo_name = :value2",
+                    ExpressionAttributeValues={
+                        ":value2": truck_username + '.' + extension
+                    }
+                )
+            else:
+                error = True
+                error_msg = 'Error: Invalid photo format! Please choose from jpg, jpeg, gif, png!'
+                if error:
+                    return render_template('owner_set.html', truck_username=truck_username, error_msg=error_msg,
+                                           location_set=location)
+
+    return redirect(url_for('owner_home', truck_username=truck_username))
+
+
 
 

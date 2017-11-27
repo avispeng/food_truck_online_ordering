@@ -7,6 +7,7 @@
         margin: 3pt;
         }
         th{
+        width:225px;
         padding-top: 12px;
         padding-bottom: 12px;
         text-align: center;
@@ -54,6 +55,19 @@
 <h1 align="center" id="top">Welcome! {{truck_username}}!</h1>
 <br>
 <div align="center">
+    <p>
+        Location:
+        {% if photo != None %}
+            <a href="{{url_for('show_photo', truck_username=truck_username, photo=photo)}}">{{truck_location if truck_location != None}}</a>
+        {% else %}
+            {{truck_location if truck_location != None}}
+        {% endif %}
+    </p>
+    <div style="display: inline-block;">
+        <form action="{{url_for('owner_setting', truck_username=truck_username)}}" method="get">
+            <input type='submit' value='Setting' class="topButtons" />
+        </form>
+    </div>
     <div style="display: inline-block;">
         <form action="{{url_for('add_dish', truck_username=truck_username)}}" method="get">
             <input type='submit' value='Add One Dish' class="topButtons" />
