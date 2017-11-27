@@ -6,6 +6,10 @@ import boto3
 from boto3.dynamodb.conditions import Key, Attr
 import datetime
 
+from twilio.rest import Client
+from flask import session
+from app import config
+
 dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
 
 @webapp.route('/customer', methods=['GET'])
@@ -92,60 +96,43 @@ def customer_signup():
     Sign up as a truck owner
     :return: the authenticated owner's home page
     """
-    username = request.form.get('new_username')
-    pwd = request.form.get('new_password')
-
-    # check length of input
-    error = False
-    if len(username) != 10 or len(pwd)<6 or len(pwd)>20:
-        error=True
-        error_msg = "Error: Invalid Username or Password Length"
-    if error:
+    username = session['username']
+    pwd = session['pwd']
+    if username is None or pwd is None:
+        error_msg = "Error: username or password failed to submit"
         return render_template("customer_main.html", title="Customer Page", signup_error_msg=error_msg,
                                sign_username=username)
 
-    alphabet = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-    numdic = "0123456789"
-    # check if the username is valid
-    for char in username:
-        if char not in numdic:
-            error=True
-            error_msg = "Error: Username Must Be Your 10 Digit Cellphone Number"
-        if error:
-            return render_template("customer_main.html", title="Customer Page", signup_error_msg=error_msg,
-                                   sign_username=username)
-
-    # check whether username exists in customers table
+    # customer table2
     table2 = dynamodb.Table('customers')
-    response2 = table2.query(
-        KeyConditionExpression=Key('customer_username').eq(username)
-    )
-    error = False
-    if response2['Count'] != 0:
-        error = True
-        error_msg = "Error: Username already exists!"
-    if error:
-        return render_template("customer_main.html", title="Customer Page", signup_error_msg=error_msg,
-                                   sign_username=username)
+    # check authentication code!
+    verification_code = request.form.get('verification_code')
+    if verification_code == session['verification_code']:
+        alphabet = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        # create a salt value
+        chars = []
+        for i in range(8):
+            chars.append(random.choice(alphabet))
+        salt = "".join(chars)
+        pwd += salt
+        hashed_pwd = hashlib.sha256(pwd.encode()).hexdigest()
+        response = table2.put_item(
+            Item={
+                'customer_username': username,
+                'hashed_pwd': hashed_pwd,
+                'salt': salt
+            }
+        )
+        # add to the session
+        session['authenticated'] = True
+        session['username'] = username
+        return redirect(url_for('customer_home', customer_name=username))
 
-    # create a salt value
-    chars=[]
-    for i in range(8):
-        chars.append(random.choice(alphabet))
-    salt = "".join(chars)
-    pwd += salt
-    hashed_pwd = hashlib.sha256(pwd.encode()).hexdigest()
-    response = table2.put_item(
-        Item={
-            'customer_username': username,
-            'hashed_pwd': hashed_pwd,
-            'salt': salt
-        }
-    )
-    # add to the session
-    session['authenticated'] = True
-    session['username'] = username
-    return redirect(url_for('customer_home', customer_name=username))
+    # invalid verification_code
+    else:
+        error_msg = "Error: Invalid verfication code"
+        return render_template("customer_main.html", title="Customer Page",
+                               signup_error_msg=error_msg, sign_username=username)
 
 
 # display the menu provided by a particular truck ==> customer_foodtruck_list
@@ -169,7 +156,7 @@ def select_truck(customer_name, truck_username):
     )
 
     # sanity check
-    if response['Items'] is None:
+    if response['Count'] == 0:
         print("error: the food truck does not exist: ", truck_username)
         return
 
@@ -328,3 +315,75 @@ def customer_complete_order(customer_name, truck_username, dish_name):
     return redirect(url_for('my_ongoing_orders', customer_name=customer_name,
                             truck_username=truck_username))
 
+
+# perform sanity check for the input first, before going to
+# verification step
+@webapp.route('/customer/request_activation', methods=['post'])
+def request_verification():
+    username = request.form.get('new_username')
+    pwd = request.form.get('new_password')
+
+    # check length of input
+    error = False
+    if len(username) != 10 or len(pwd)<6 or len(pwd)>20:
+        error=True
+        error_msg = "Error: Invalid Username or Password Length"
+    if error:
+        return render_template("customer_main.html", title="Customer Page", signup_error_msg=error_msg,
+                               sign_username=username)
+
+    alphabet = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    numdic = "0123456789"
+    # check if the username is valid
+    for char in username:
+        if char not in numdic:
+            error=True
+            error_msg = "Error: Username Must Be Your 10 Digit Cellphone Number"
+        if error:
+            return render_template("customer_main.html", title="Customer Page", signup_error_msg=error_msg,
+                                   sign_username=username)
+
+    # check whether username exists in customers table
+    table2 = dynamodb.Table('customers')
+    response2 = table2.query(
+        KeyConditionExpression=Key('customer_username').eq(username)
+    )
+    error = False
+    if response2['Count'] != 0:
+        error = True
+        error_msg = "Error: Username already exists!"
+    if error:
+        return render_template("customer_main.html", title="Customer Page", signup_error_msg=error_msg,
+                                   sign_username=username)
+
+    # store in session for now!!! will erase after verification
+    session['username'] = username
+    session['pwd'] = pwd
+
+    # here sanity check is done
+    send_confirmation_code(username)
+    # now go to customer_main_verification html
+    return render_template('customer_main_verification.html')
+
+
+# twilio helper code
+def send_confirmation_code(to_number):
+    verification_code = generate_code()
+    send_sms(to_number, verification_code)
+    session['verification_code'] = verification_code
+    return verification_code
+
+
+def generate_code():
+    return str(random.randrange(100000, 999999))
+
+
+def send_sms(to_number, body):
+    account_sid = config.TWILIO_ACCOUNT_SID
+    auth_token = config.TWILIO_AUTH_TOKEN
+    twilio_number = config.from_twilio_number
+
+    client = Client(account_sid, auth_token)
+    client.api.messages.create(to_number,
+                           from_=twilio_number,
+                           body=body)
