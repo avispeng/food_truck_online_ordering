@@ -246,6 +246,8 @@ def my_ongoing_orders(customer_name, truck_username):
         ScanIndexForward=True
     )
 
+    #print("on going order???:\n", response['Items'])
+
     # note we r using the same template customer_orders.html
     return render_template('customer_orders.html', customer_name=customer_name,
                            orders=response['Items'], title='My Ongoing Orders')
