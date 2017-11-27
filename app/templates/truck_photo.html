@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block head %}
+    <title>{{truck_username}}'s Photo</title>
+    <style>
+        input[type=submit] {
+        font-size: 1em;
+        font-family: Verdana, sans-serif;
+        width:150px;
+        height:40px;
+        color: white;
+        padding: 5px 10px;
+        margin: 5px 10px;
+        <!--border-radius: 5px;-->
+        border-style: outset;
+        border-color: #000;
+        background: #64AAD0;
+        }
+        input[type=submit]:hover{
+        background: #034569;
+        }
+    </style>
+{% endblock %}
+{% block body %}
+    <h1 align="center" id="top">Your truck's photo</h1>
+    <center>
+        <img src="https://delicious-dishes.s3.amazonaws.com/{{photo}}"
+             alt="https://delicious-dishes.s3.amazonaws.com/{{photo}}">
+        <br>
+        <form action="{{url_for('owner_home', truck_username=truck_username)}}" method="get">
+            <input type="submit" value="Back">
+        </form><br>
+    </center>
+{% endblock %}
