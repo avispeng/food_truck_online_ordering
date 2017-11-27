@@ -51,9 +51,15 @@
     </style>
 {% endblock %}
 {% block body %}
-<h1 align="center" id="top">{{truck_username}}</h1>
+<h1 align="center" id="top">Similar menu comparison</h1>
 <br>
 <div align="center">
+    <div style="display: inline-block;">
+        <form action="{{url_for('select_truck', customer_name=customer_name, truck_username=truck_username)}}"
+              method="get">
+            <input type='submit' value='Back' class="topButtons" />
+        </form>
+    </div>
     <div style="display: inline-block;">
         <form action="{{url_for('my_history_orders', customer_name=customer_name, truck_username=truck_username)}}"
               method="get">
@@ -74,33 +80,30 @@
     <br>
     <table>
         <thead>
+        <th>Foodtruck Name</th>
         <th>Dish Name</th>
         <th>Price</th>
         <th>Photo</th>
         <th>Order</th>
         </thead>
-        {% for dish in dishes %}
+        {% for menu in menu_set %}
             <tr>
-                <td>{{dish['dish_name']}}</td>
-                <td>{{dish['price']}}</td>
+                <td>{{menu['truck_username']}}</td>
+                <td>{{menu['dish_name']}}</td>
+                <td>{{menu['price']}}</td>
                 <td>
-                    <img src="https://delicious-dishes.s3.amazonaws.com/{{truck_username}}/{{dish['img_filename']}}"
-                                 alt="https://delicious-dishes.s3.amazonaws.com/{{truck_username}}/{{dish['img_filename']}}"
+                    <img src="https://delicious-dishes.s3.amazonaws.com/{{menu['truck_username']}}/{{menu['img_filename']}}"
+                                 alt="https://delicious-dishes.s3.amazonaws.com/{{menu['truck_username']}}/{{menu['img_filename']}}"
                                  style="width:120px;height:120px;">
                 </td>
                 <td>
                     <form action="{{url_for('customer_complete_order', customer_name=customer_name,
-                        truck_username=truck_username, dish_name=dish['dish_name'])}}"
+                        truck_username=menu['truck_username'], dish_name=menu['dish_name'])}}"
                           method='post'>
                         <input type=number max="100" min="0" class="operation" name="order_count"/>
                         <input type="submit" value="Order">
                     </form>
                     <br>
-                    <form action="{{url_for('customer_compare_price', customer_name=customer_name,
-                        truck_username=truck_username, dish_name=dish['dish_name'])}}"
-                          method='post'>
-                        <input type="submit" value="See all the identical dishes">
-                    </form>
                 </td>
             </tr>
         {% endfor %}

@@ -10,6 +10,8 @@ from twilio.rest import Client
 from flask import session
 from app import config
 
+import webbrowser
+
 dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
 
 @webapp.route('/customer', methods=['GET'])
@@ -387,3 +389,27 @@ def send_sms(to_number, body):
     client.api.messages.create(to_number,
                            from_=twilio_number,
                            body=body)
+
+
+# compares if all dishes
+@webapp.route('/customer/<customer_name>/<truck_username>/<dish_name>/compare', methods=['POST'])
+def customer_compare_price(customer_name, truck_username, dish_name):
+    if 'authenticated' not in session:
+        return redirect(url_for('customer_main'))
+    if session.get('username', '') != customer_name:
+        return redirect(url_for('customer_home', customer_name=session['username']))
+
+    table = dynamodb.Table('menu')
+
+    response = table.scan(
+        Select='ALL_ATTRIBUTES',
+        FilterExpression=Key('truck_username').gt(' ') & Key('dish_name').eq(dish_name)
+    )
+
+    menu_set = response['Items']
+    print("menu_set is:", menu_set)
+    return render_template('menu_comparison.html', customer_name=customer_name,
+                           menu_set=menu_set)
+
+
+
