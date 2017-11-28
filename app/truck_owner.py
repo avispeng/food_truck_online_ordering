@@ -479,7 +479,8 @@ def complete_order(truck_username):
         KeyConditionExpression=Key('order_no').eq(order_no),
     )
     cell = response2['Items'][0]['customer_username']
-    msg = "Hey. You have an order from {} just completed. Please have a look at ongoing orders' page.".format(truck_username)
+    dishes = response2['Items'][0]['dishes']
+    msg = "Hey. Your order {0} from {1} is completed. Please have a look at ongoing orders' page.".format(str(dishes), truck_username)
     send_sms(cell, msg)
 
     return redirect(url_for('ongoing_orders', truck_username=truck_username))
