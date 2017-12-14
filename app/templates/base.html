@@ -7,7 +7,7 @@
     <script type="text/javascript">
       var nIntervId;
       function refresh() {
-      nIntervId = setInterval(get_messages, 60000);
+      nIntervId = setInterval(get_messages, 20000);
       }
       function get_messages() {
             $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};

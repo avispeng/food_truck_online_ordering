@@ -1,4 +1,8 @@
 # virtual environment
 venv/
 
-.idea/
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/modules.xml
+.idea/vcs.xml
+.idea/misc.xml

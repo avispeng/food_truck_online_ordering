@@ -311,7 +311,7 @@ def my_ongoing_orders(customer_name):
 @webapp.route('/customer/<customer_name>/<truck_username>/<dish_name>/<price>/complete', methods=['POST'])
 def customer_new_order(customer_name, truck_username, dish_name, price):
     """
-    Complete the specific order and put it in history orders
+    Place a new order
     :param customer_name: the authenticated user
     :param truck_username: the truck that order from
     :param dish_name: the dish that is ordered
@@ -391,11 +391,11 @@ def customer_new_order(customer_name, truck_username, dish_name, price):
 @webapp.route('/customer/<customer_name>/<truck_username>/<dish_name>/compare', methods=['POST'])
 def customer_compare_price(customer_name, truck_username, dish_name):
     """
-    
+    compare prices of same dishes from different trucks
     :param customer_name: 
     :param truck_username: 
-    :param dish_name: 
-    :return: 
+    :param dish_name: the dish to compare
+    :return: the page in which same dish with different prices are shown
     """
     if 'authenticated' not in session:
         return redirect(url_for('customer_main'))
@@ -422,8 +422,8 @@ def customer_compare_price(customer_name, truck_username, dish_name):
 @webapp.route('/_request_activation/<cell>', methods=['get'])
 def request_activation(cell):
     """
-    
-    :param cell: 
+    activate the phone number that the user entered by sending verification code
+    :param cell: the phone number the user entered
     :return: 
     """
     # username = request.form.get('new_username')
@@ -478,10 +478,19 @@ def send_confirmation_code(to_number):
 
 
 def generate_code():
+    """
+    :return: 6-digit verification code generated
+    """
     return str(random.randrange(100000, 999999))
 
 
 def send_sms(to_number, body):
+    """
+    send messages
+    :param to_number: the number we send message to
+    :param body: message body
+    :return: 
+    """
     account_sid = config.TWILIO_ACCOUNT_SID
     auth_token = config.TWILIO_AUTH_TOKEN
     twilio_number = config.from_twilio_number
